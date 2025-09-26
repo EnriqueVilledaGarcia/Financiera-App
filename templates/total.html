@@ -1,0 +1,233 @@
+{% extends 'base.html' %}
+
+{% block title %}Financial Loans - Total Financiero{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-lg bg-dark text-white">
+                <div class="card-header bg-black py-3">
+                    <h2 class="text-center mb-0">
+                        <i class="fas fa-calculator me-2"></i>Total Financiero
+                    </h2>
+                </div>
+                <div class="card-body p-4">
+                    <!-- Formulario de ingreso -->
+                    <div class="mb-5">
+
+                        <form method="POST" class="needs-validation" novalidate>
+                            <div class="row g-3">
+                                <!-- Monto en Caja -->
+                                <div class="col-md-6 mb-3">
+                                    <label for="montoCaja" class="form-label fw-semibold">
+                                        <i class="fas fa-money-bill-wave me-2"></i>Capital en caja
+                                    </label>
+                                    <div class="input-group">
+                                        <span class="input-group-text bg-black border-dark">$</span>
+                                        <input type="number" class="form-control bg-secondary text-white border-dark" 
+                                               id="montoCaja" name="montoCaja" step="0.01" 
+                                               value="{{ monto_caja }}" required>
+                                    </div>
+                                </div>
+
+                                <!-- Monto de Socios -->
+                                <div class="col-md-6 mb-3">
+                                    <label for="montoSocios" class="form-label fw-semibold">
+                                        <i class="fas fa-hand-holding-usd me-2"></i>Capital de socios
+                                    </label>
+                                    <div class="input-group">
+                                        <span class="input-group-text bg-black border-dark">$</span>
+                                        <input type="number" class="form-control bg-secondary text-white border-dark" 
+                                               id="montoSocios" name="montoSocios" step="0.01" 
+                                               value="{{ monto_socios }}" required>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="text-center mt-4">
+                                <button type="submit" class="btn btn-primary px-5">
+                                    <i class="fas fa-calculator me-2"></i>Calcular Total
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- Suma Total de Créditos -->
+                    <div class="mb-5">
+                        <h4 class="mb-4 text-warning">
+                            <i class="fas fa-coins me-2"></i>Suma total de créditos por cobrar
+                        </h4>
+                        <div class="alert alert-dark" role="alert">
+                            <h3 class="text-center text-warning fw-bold">
+                                ${{ monto_total if monto_total is not none else "0.00" }}
+                            </h3>
+                        </div>
+                    </div>
+
+                    <!-- Gráfica de Créditos por Mes -->
+                    <div class="mb-5">
+                        <h4 class="mb-4 text-info">
+                            <i class="fas fa-chart-line me-2"></i>Historial de Créditos por Mes
+                        </h4>
+                        <div class="card bg-gradient border-0 shadow-lg" style="background: linear-gradient(135deg, #56ab2f 0%, #a8e6cf 100%);">
+                            <div class="card-body p-4">
+                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                    <h5 class="text-white mb-0 fw-bold">Créditos por Mes</h5>
+                                    <select id="yearFilter" class="form-select form-select-sm" style="width: auto; background-color: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.3);">
+                                        {% for año in años_disponibles %}
+                                        <option value="{{ año }}" {% if año == año_seleccionado %}selected{% endif %} style="color: #000;">{{ año }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div style="height: 300px;">
+                                    <canvas id="creditosChart"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Resultado -->
+                    <div class="mt-5 pt-4 border-top border-secondary">
+                        <div class="alert alert-dark" role="alert">
+                            <h3 class="alert-heading mb-3 text-center">Total Financiera</h3>
+                            <h2 class="display-5 text-center text-success fw-bold">
+                                ${{ total_financiera if total_financiera is not none else "0.00" }}
+                            </h2>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    body {
+        background-color: #121212;
+    }
+    .card {
+        border-radius: 10px;
+        overflow: hidden;
+    }
+    .form-control {
+        background-color: #333;
+        border: 1px solid #444;
+        color: white;
+    }
+    .form-control:focus {
+        background-color: #444;
+        color: white;
+        border-color: #555;
+        box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+    }
+    .input-group-text {
+        background-color: #000;
+        border-color: #444;
+        color: white;
+    }
+    .btn:not(.btn-outline-light):not(.btn-logout) {
+        border-radius: 8px;
+        padding: 10px 20px;
+        font-weight: 500;
+        transition: all 0.3s ease;
+        font-size: 1rem; /* Tamaño de fuente estándar */
+        padding: 0.5rem 1rem; /* Padding estándar */
+    }
+
+    /* Adaptación para pantallas pequeñas */
+    @media (max-width: 576px) {
+        .btn:not(.btn-outline-light):not(.btn-logout) {
+            font-size: 0.8rem; /* Reducir tamaño de fuente */
+            padding: 0.25rem 0.5rem; /* Reducir padding */
+        }
+    }
+    .alert-dark {
+        background-color: #1e1e1e;
+        border-color: #444;
+        color: white;
+        border-radius: 8px;
+    }
+    .border-secondary {
+        border-color: #444 !important;
+    }
+</style>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    // Configuración de la gráfica
+    const ctx = document.getElementById('creditosChart').getContext('2d');
+    const mesesData = {{ meses|tojson|safe }};
+    const cantidadesData = {{ cantidades|tojson|safe }};
+    const todosDatos = {{ creditos_por_año_mes|tojson|safe }};
+    
+    const creditosChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: mesesData,
+            datasets: [{
+                label: 'Créditos',
+                data: cantidadesData,
+                borderColor: 'rgba(255, 255, 255, 0.8)',
+                backgroundColor: 'rgba(255, 255, 255, 0.2)',
+                borderWidth: 2,
+                fill: true,
+                tension: 0.4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    labels: {
+                        color: 'white'
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        color: 'white',
+                        stepSize: 1
+                    },
+                    grid: {
+                        color: 'rgba(255, 255, 255, 0.1)'
+                    }
+                },
+                x: {
+                    ticks: {
+                        color: 'white'
+                    },
+                    grid: {
+                        color: 'rgba(255, 255, 255, 0.1)'
+                    }
+                }
+            }
+        }
+    });
+
+    // Función para actualizar la gráfica cuando cambie el año
+    document.getElementById('yearFilter').addEventListener('change', function() {
+        const añoSeleccionado = parseInt(this.value);
+        const mesesNombres = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 
+                             'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+        const nuevasCantidades = [];
+        
+        // Crear datos para los 12 meses del año seleccionado
+        for (let mes = 1; mes <= 12; mes++) {
+            if (todosDatos[añoSeleccionado] && todosDatos[añoSeleccionado][mes]) {
+                nuevasCantidades.push(todosDatos[añoSeleccionado][mes].cantidad);
+            } else {
+                nuevasCantidades.push(0);
+            }
+        }
+        
+        // Actualizar la gráfica
+        creditosChart.data.labels = mesesNombres;
+        creditosChart.data.datasets[0].data = nuevasCantidades;
+        creditosChart.update();
+    });
+</script>
+{% endblock %}

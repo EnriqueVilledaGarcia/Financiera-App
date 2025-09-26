@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css">
+    <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}" type="image/x-icon"> <!-- Favicon agregado -->
+    <title>{% block title %}{% endblock %}</title>
+    <style>
+        /* Estilo personalizado para el navbar */
+        .navbar-custom {
+            background-color: #000000 !important; /* Fondo negro */
+        }
+        
+        /* Estilo para la imagen del logo */
+        .navbar-brand img {
+            height: 40px; /* Tamaño fijo para el logotipo */
+            width: auto; /* Mantener proporción */
+            max-height: 100%; /* No superar la altura del navbar */
+        }
+        
+        /* Estilo para los botones del navbar */
+        .btn-logout, .btn-outline-light {
+            color: #fff;
+            border-color: #fff;
+            font-size: 0.8rem; /* Tamaño de fuente pequeño */
+            padding: 0.3rem 0.6rem; /* Padding reducido */
+        }
+        .btn-logout:hover, .btn-outline-light:hover {
+            background-color: #fff;
+            color: #000;
+        }
+
+        /* Estilos para los nav-links cuando actúan como botones */
+        .btn-nav-link {
+            color: #fff !important;
+            font-size: 0.8rem;
+            padding: 0.3rem 0.6rem;
+            margin: 0 0.2rem;
+            border: 1px solid #fff;
+            border-radius: 0.25rem;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            display: inline-block;
+        }
+        .btn-nav-link:hover {
+            background-color: #fff;
+            color: #000 !important;
+        }
+
+        /* Estilo para el botón hamburguesa */
+        .navbar-toggler {
+            border: 1px solid #fff;
+            padding: 0.25rem 0.5rem;
+        }
+        .navbar-toggler:focus {
+            box-shadow: none;
+        }
+        .navbar-toggler-icon {
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='rgba%28255, 255, 255, 1%29' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e");
+        }
+
+        /* Adaptación para pantallas pequeñas */
+        @media (max-width: 576px) {
+            .btn-logout, .btn-outline-light, .btn-nav-link {
+                font-size: 0.7rem; /* Reducir tamaño de fuente */
+                padding: 0.25rem 0.5rem; /* Reducir padding */
+                margin: 0.1rem 0; /* Espaciado vertical en el menú colapsado */
+                display: block; /* Los elementos se apilan verticalmente */
+                width: 100%; /* Ocupar todo el ancho disponible */
+                text-align: left; /* Alinear texto a la izquierda */
+            }
+            .navbar-brand img {
+                height: 30px; /* Reducir tamaño del logo */
+            }
+            .navbar-nav {
+                padding-top: 0.5rem; /* Espaciado superior en el menú colapsado */
+            }
+        }
+
+        /* Asegurar que los nav-links estén alineados horizontalmente en pantallas grandes */
+        @media (min-width: 577px) {
+            .navbar-nav {
+                display: flex;
+                align-items: center; /* Alinear verticalmente */
+                gap: 0.5rem; /* Espaciado entre botones */
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navbar con fondo negro -->
+    <nav class="navbar navbar-expand-sm navbar-dark navbar-custom shadow-sm">
+        <div class="container">
+            <!-- Logo con imagen ajustada -->
+            <a class="navbar-brand d-flex align-items-center" href="{{ url_for('menu')}}">
+                <img src="{{ url_for('static', filename='logotipo.png') }}" alt="Financial Loans Logo" class="img-fluid">
+            </a>
+            
+            <!-- Botón hamburguesa para pantallas pequeñas -->
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" 
+                    aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            
+            <!-- Contenido colapsable del navbar -->
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <div class="navbar-nav ms-auto"> <!-- ms-auto empuja el contenido a la derecha -->
+                    <a href="{{ url_for('register') }}" class="nav-link btn-nav-link">
+                        <i class="fas fa-user-plus me-1"></i> Nuevo usuario
+                    </a>
+                    <a href="{{ url_for('menu') }}" class="nav-link btn-nav-link">
+                        <i class="fas fa-arrow-left me-1"></i> Regresar
+                    </a>
+                    <a href="{{ url_for('logout') }}" class="nav-link btn-nav-link">
+                        <i class="fas fa-sign-out-alt me-1"></i> Cerrar sesión
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+    
+    <div class="container mt-4">
+        <hr>
+        <div class="container">
+            {% block content %}{% endblock %}
+        </div>
+    </div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+</body>
+</html>

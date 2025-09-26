@@ -1,0 +1,348 @@
+{% extends 'base.html'%}
+
+{% block title %}Financial Loans - Detalle de Pagos{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="fw-bold text-white">
+            <i class="fas fa-money-bill-wave me-2"></i>Detalle de Pagos - {{ cliente.nombre }} {{ cliente.ap_paterno
+            }} {{ cliente.ap_materno }}
+        </h2>
+        <a href="{{ url_for('creditos') }}" class="btn btn-outline-light btn-sm me-2">
+            <i class="fa-solid fa-xmark"></i> Salir
+        </a>
+    </div>
+
+    <!-- Cards de Estadísticas -->
+
+    <div class="row mb-4">
+        <div class="col-lg-4 col-md-6 mb-3">
+            <div class="card bg-success bg-gradient border-0 shadow-lg h-100">
+                <div class="card-body d-flex align-items-center">
+                    <div class="me-3">
+                        <i class="fas fa-check-circle fa-3x text-white opacity-75"></i>
+                    </div>
+                    <div class="text-white">
+                        <h3 class="card-title mb-0 fw-bold" id="contador-realizados">0</h3>
+                        <p class="card-text mb-0">Pagos Realizados</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-4 col-md-6 mb-3">
+            <div class="card bg-warning bg-gradient border-0 shadow-lg h-100">
+                <div class="card-body d-flex align-items-center">
+                    <div class="me-3">
+                        <i class="fas fa-clock fa-3x text-white opacity-75"></i>
+                    </div>
+                    <div class="text-white">
+                        <h3 class="card-title mb-0 fw-bold" id="contador-pendientes">0</h3>
+                        <p class="card-text mb-0">Pagos Pendientes</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-4 col-md-12 mb-3">
+            <div class="card bg-danger bg-gradient border-0 shadow-lg h-100">
+                <div class="card-body d-flex align-items-center">
+                    <div class="me-3">
+                        <i class="fas fa-exclamation-triangle fa-3x text-white opacity-75"></i>
+                    </div>
+                    <div class="text-white">
+                        <h3 class="card-title mb-0 fw-bold" id="contador-retrasados">0</h3>
+                        <p class="card-text mb-0">Pagos Retrasados</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card border-0 shadow-lg bg-dark text-white">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-dark table-hover table-borderless mb-0">
+                    <thead class="bg-black">
+                        <tr>
+                            <th class="text-center py-3">Fecha de pago</th>
+                            <th class="text-center py-3">Cantidad</th>
+                            <th class="text-center py-3">Status</th>
+                            <th class="text-center py-3">Opciones</th>
+                        </tr>
+                    </thead>
+                    <tbody class="table-group-divider">
+                        {% for credito in creditos %}
+                            {% set cantidad_por_pago = (credito.total_original | float) / (credito.no_pagos | int) %}
+                            {% set total_restante = credito.total | float %}
+                            {% for fecha in credito.fechas_pagos %}
+                            <tr>
+                                <td class="text-center align-middle">{{ fecha }}</td>
+                                <td class="text-center align-middle">${{ "%.2f"|format(cantidad_por_pago) }}</td>
+                                <td class="text-center align-middle">
+                                    {% set pago_realizado = credito.pagos | selectattr('fecha', 'equalto', fecha) | list %}
+                                    {% if total_restante == 0 %}
+                                        <span class="badge bg-success">Pagado</span>
+                                    {% elif pago_realizado %}
+                                        <span class="badge bg-success">Pagado</span>
+                                    {% elif fecha < current_date.strftime('%Y-%m-%d') %}
+                                        <span class="badge bg-danger">Retrasado {{ (current_date - datetime.strptime(fecha, '%Y-%m-%d').date()).days }} días</span>
+                                    {% else %}
+                                        <span class="badge bg-secondary">Pendiente</span>
+                                    {% endif %}
+                                </td>
+                                <td class="text-center align-middle">
+                                    {% if total_restante > 0 and not pago_realizado %}
+                                        <div class="d-flex justify-content-center gap-2">
+                                            <!-- Botón Pagar -->
+                                            <form action="{{ url_for('marcar_pago', id_credito=credito.id_credito, fecha=fecha) }}" method="POST" class="m-0">
+                                                <input type="hidden" name="cantidad" value="{{ cantidad_por_pago | round(2) }}">
+                                                <button type="submit" class="btn btn-sm btn-success">
+                                                    <i class="fas fa-check me-1"></i> Pagar
+                                                </button>
+                                            </form>
+
+                                            <!-- Botón Otra Cantidad -->
+                                            <button class="btn btn-sm btn-warning" data-bs-toggle="modal" data-bs-target="#modalOtraCantidad{{ loop.index }}">
+                                                <i class="fas fa-pen-to-square me-1"></i> Otra Cantidad
+                                            </button>
+                                        </div>
+
+                                        <!-- Modal para Otra Cantidad -->
+                                        <div class="modal fade" id="modalOtraCantidad{{ loop.index }}" tabindex="-1" aria-labelledby="modalOtraCantidadLabel" aria-hidden="true">
+                                            <div class="modal-dialog modal-dialog-centered modal-sm">
+                                                <div class="modal-content bg-dark text-white">
+                                                    <div class="modal-header bg-black border-0">
+                                                        <h5 class="modal-title" id="modalOtraCantidadLabel">
+                                                            <i class="fas fa-money-bill-wave me-2"></i>Pagar Otra Cantidad
+                                                        </h5>
+                                                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                                                    </div>
+                                                    <form data-index="{{ loop.index }}" data-restante="{{ total_restante }}" 
+                                                          onsubmit="return validarMonto(this.dataset.index, this.dataset.restante)"
+                                                          action="{{ url_for('marcar_pago', id_credito=credito.id_credito, fecha=fecha) }}" method="POST">
+                                                        <div class="modal-body">
+                                                            <div class="mb-3">
+                                                                <label for="cantidad-{{ loop.index }}" class="form-label">Cantidad a pagar:</label>
+                                                                <input type="number" inputmode="decimal" step="0.01" min="0.01" class="form-control bg-secondary text-white" 
+                                                                       id="cantidad-{{ loop.index }}" name="cantidad" required
+                                                                       placeholder="Monto máximo: ${{ "%.2f"|format(total_restante) }}">
+                                                            </div>
+                                                        </div>
+                                                        <div class="modal-footer border-0 d-flex flex-row justify-content-between gap-2">
+                                                            <button type="button" class="btn btn-danger flex-fill" data-bs-dismiss="modal">
+                                                                <i class="fas fa-times me-1"></i> Cancelar
+                                                            </button>
+                                                            <button type="submit" class="btn btn-primary flex-fill">
+                                                                <i class="fas fa-check me-1"></i> Confirmar Pago
+                                                            </button>
+                                                        </div>
+                                                    </form>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    {% elif pago_realizado %}
+                                        <form onsubmit="return confirmarCancelacion(event)" action="{{ url_for('cancelar_pago', id_credito=credito.id_credito, fecha=fecha) }}" method="POST" class="m-0">
+                                            <button type="submit" class="btn btn-sm btn-danger">
+                                                <i class="fas fa-undo me-1"></i> Cancelar Pago
+                                            </button>
+                                        </form>
+                                    {% else %}
+                                        <span class="text-bold">Pago realizado</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+    function validarMonto(index, restante) {
+        const inputCantidad = document.getElementById(`cantidad-${index}`);
+        inputCantidad.focus(); // Asegura que el campo de entrada reciba el foco
+        const cantidad = parseFloat(inputCantidad.value);
+        const restanteNum = parseFloat(restante);
+
+        if (cantidad > restanteNum) {
+            Swal.fire({
+                title: 'Monto Excedido',
+                text: `El monto ingresado $${cantidad.toFixed(2)} excede el saldo restante $${restanteNum.toFixed(2)}`,
+                icon: 'error',
+                confirmButtonColor: '#d33',
+                confirmButtonText: 'Entendido'
+            });
+            return false;
+        }
+        
+        if (cantidad <= 0) {
+            Swal.fire({
+                title: 'Error: Monto Inválido',
+                text: "El monto debe ser mayor que cero",
+                icon: 'error',
+                confirmButtonColor: '#d33',
+                confirmButtonText: 'Entendido'
+            });
+            return false;
+        }
+        
+        return true;
+    }
+
+    function confirmarCancelacion(event) {
+        event.preventDefault(); // Evita el envío del formulario inmediato
+        Swal.fire({
+            title: '¿Estás seguro?',
+            text: "Esta acción cancelará el pago realizado.",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#3085d6',
+            confirmButtonText: 'Sí, cancelar',
+            cancelButtonText: 'No, regresar'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                event.target.submit(); // Envía el formulario si se confirma
+            }
+        });
+    }
+
+    // Función para contar los pagos basándose en los badges de la tabla
+    function contarPagos() {
+        // Contar badges con clase bg-success (Pagado)
+        const pagosRealizados = document.querySelectorAll('.badge.bg-success').length;
+        
+        // Contar badges con clase bg-danger (Retrasado)
+        const pagosRetrasados = document.querySelectorAll('.badge.bg-danger').length;
+        
+        // Contar badges con clase bg-secondary (Pendiente)
+        const pagosPendientes = document.querySelectorAll('.badge.bg-secondary').length;
+        
+        // Actualizar los contadores
+        document.getElementById('contador-realizados').textContent = pagosRealizados;
+        document.getElementById('contador-pendientes').textContent = pagosPendientes;
+        document.getElementById('contador-retrasados').textContent = pagosRetrasados;
+    }
+
+    // Ejecutar el conteo cuando la página se carga
+    document.addEventListener('DOMContentLoaded', contarPagos);
+</script>
+
+<style>
+    body {
+        background-color: #121212;
+    }
+    .table-dark {
+        --bs-table-bg: #1e1e1e;
+        --bs-table-striped-bg: #252525;
+        --bs-table-hover-bg: #2e2e2e;
+        border-color: #444;
+    }
+    .card {
+        border-radius: 10px;
+        overflow: hidden;
+    }
+    .badge {
+        font-size: 0.85em;
+        padding: 5px 10px;
+    }
+    .btn {
+        border-radius: 6px;
+    }
+    .modal-content {
+        border-radius: 10px;
+    }
+    .form-control {
+        background-color: #333;
+        border-color: #444;
+        color: white;
+    }
+    .form-control:focus {
+        background-color: #444;
+        color: white;
+        border-color: #555;
+        box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+    }
+    @media (max-width: 576px) {
+        .modal-dialog {
+            margin: 0;
+            max-width: 100%;
+            height: 100%;
+        }
+        .modal-content {
+            height: 100%;
+            border-radius: 0;
+            overflow-y: auto;
+        }
+        .modal-body {
+            padding: 1rem;
+        }
+        .modal-header, .modal-footer {
+            padding: 1rem;
+        }
+        input[type="number"] {
+            appearance: textfield; /* Propiedad estándar */
+            -moz-appearance: textfield; /* Elimina flechas en Firefox */
+        }
+        input[type="number"]::-webkit-inner-spin-button, 
+        input[type="number"]::-webkit-outer-spin-button {
+            -webkit-appearance: none; /* Elimina flechas en Chrome */
+            margin: 0;
+        }
+        .modal-mobile {
+            width: 100%;
+            margin: 0;
+            padding: 0;
+        }
+        .modal-content {
+            border-radius: 0;
+            width: 100%;
+            height: 100%;
+            overflow-y: auto;
+        }
+        .modal-header, .modal-footer {
+            padding: 1rem;
+        }
+        .modal-body {
+            padding: 1rem;
+        }
+        .modal-mobile {
+            max-width: 100%; /* Asegura que el modal ocupe todo el ancho disponible */
+            margin: 0 10px; /* Añade un margen lateral para evitar que toque los bordes */
+        }
+        .modal-content {
+            padding: 10px; /* Reduce el padding interno del modal */
+        }
+        .modal-header h5 {
+            font-size: 1.2em; /* Ajusta el tamaño del título */
+        }
+        .btn {
+            font-size: 0.85em; /* Ajusta el tamaño de los botones */
+        }
+        .table-responsive {
+            font-size: 0.9em;
+        }
+        h2 {
+            font-size: 1.5em;
+        }
+        .modal-body input {
+            font-size: 1em; /* Asegura que el campo de entrada sea legible */
+            padding: 10px; /* Mejora la usabilidad del campo */
+        }
+    }
+    @media (max-width: 768px) {
+        .table-responsive {
+            font-size: 0.95em;
+        }
+        h2 {
+            font-size: 1.75em;
+        }
+    }
+</style>
+{% endblock %}

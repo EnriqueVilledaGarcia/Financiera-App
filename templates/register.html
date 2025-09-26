@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registro de Usuario</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background-color: #121212;
+            color: #fff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background-image: linear-gradient(135deg, #1a1a2e, #16213e);
+        }
+        
+        .register-container {
+            margin-top: 100px; /* Espacio para el navbar */
+            width: 100%;
+            max-width: 420px;
+            padding: 2.5rem;
+            background-color: rgba(30, 30, 46, 0.8);
+            border-radius: 12px;
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.4);
+            border: 1px solid #444;
+            backdrop-filter: blur(5px);
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .logo {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        
+        .logo img {
+            width: 140px;
+            height: auto;
+            margin-bottom: 1.2rem;
+            filter: drop-shadow(0 2px 5px rgba(76, 175, 80, 0.3));
+        }
+        
+        .logo h1 {
+            color: #fff;
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(to right, #4CAF50, #8BC34A);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .form-group {
+            margin-bottom: 1.8rem;
+            position: relative;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 0.6rem;
+            color: #ddd;
+            font-weight: 500;
+            font-size: 0.95rem;
+        }
+        
+        .form-group input {
+            width: 100%;
+            padding: 14px 15px 14px 40px;
+            background-color: rgba(45, 45, 45, 0.7);
+            border: 1px solid #555;
+            border-radius: 8px;
+            color: #fff;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+        
+        .form-group input:focus {
+            outline: none;
+            border-color: #4CAF50;
+            box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.2);
+            background-color: rgba(45, 45, 45, 0.9);
+        }
+        
+        .form-group i {
+            position: absolute;
+            left: 15px;
+            top: 40px;
+            color: #777;
+            font-size: 1.1rem;
+            transition: all 0.3s ease;
+        }
+        
+        .form-group input:focus + i {
+            color: #4CAF50;
+        }
+        
+        button[type="submit"] {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(to right, #4CAF50, #2E7D32);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.05rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 0.5rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        
+        button[type="submit"]:hover {
+            background: linear-gradient(to right, #3e8e41, #1B5E20);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 8px rgba(0, 0, 0, 0.15);
+        }
+        
+        button[type="submit"]:active {
+            transform: translateY(0);
+        }
+        
+        .login-link {
+            text-align: center;
+            margin-top: 2rem;
+            color: #aaa;
+            font-size: 0.95rem;
+        }
+        
+        .login-link a {
+            color: #4CAF50;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            margin-left: 5px;
+        }
+        
+        .login-link a:hover {
+            text-decoration: underline;
+            color: #8BC34A;
+        }
+        
+        .error-message {
+            color: #ff6b6b;
+            background-color: rgba(255, 107, 107, 0.1);
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 1.8rem;
+            text-align: center;
+            border: 1px solid rgba(255, 107, 107, 0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            animation: shake 0.5s ease-in-out;
+        }
+        
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-5px); }
+            40%, 80% { transform: translateX(5px); }
+        }
+        
+        .password-strength {
+            margin-top: 8px;
+            height: 4px;
+            background-color: #333;
+            border-radius: 2px;
+            overflow: hidden;
+        }
+        
+        .strength-meter {
+            height: 100%;
+            width: 0;
+            transition: width 0.3s ease, background-color 0.3s ease;
+        }
+        
+        .password-hint {
+            font-size: 0.8rem;
+            color: #777;
+            margin-top: 5px;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="register-container">
+        <div class="logo">
+            <img src="{{ url_for('static', filename='logotipo.png') }}" alt="Financial Loans Logo">
+            <h1>Registro de Usuario</h1>
+        </div>
+        
+        {% if error %}
+            <div class="error-message">
+                <i class="fas fa-exclamation-circle"></i> {{ error }}
+            </div>
+        {% endif %}
+        
+        <form method="POST" action="{{ url_for('register') }}" id="registerForm">
+            <div class="form-group">
+                <label for="usuario">Usuario:</label>
+                <i class="fas fa-user"></i>
+                <input type="text" id="usuario" name="usuario" required placeholder="Crea tu nombre de usuario" minlength="4" maxlength="20">
+            </div>
+            
+            <div class="form-group">
+                <label for="contrasena">Contraseña:</label>
+                <i class="fas fa-lock"></i>
+                <input type="password" id="contrasena" name="contrasena" required placeholder="Crea una contraseña segura" minlength="8" oninput="checkPasswordStrength(this.value)">
+                <div class="password-strength">
+                    <div class="strength-meter" id="strengthMeter"></div>
+                </div>
+                <div class="password-hint" id="passwordHint">
+                    La contraseña debe tener al menos 8 caracteres, incluyendo mayúsculas, números y caracteres especiales.
+                </div>
+            </div>
+            
+            <button type="submit">
+                <i class="fas fa-user-plus"></i> Registrar
+            </button>
+        </form>
+        
+        <div class="login-link">
+             <a href="{{ url_for('menu') }}">Regresar al menú</a>
+        </div>
+    </div>
+
+    <script>
+        function checkPasswordStrength(password) {
+            const meter = document.getElementById('strengthMeter');
+            const hint = document.getElementById('passwordHint');
+            let strength = 0;
+            
+            // Mostrar hint cuando el campo tiene foco
+            if (password.length > 0) {
+                hint.style.display = 'block';
+            } else {
+                hint.style.display = 'none';
+            }
+            
+            // Verificar longitud
+            if (password.length >= 8) strength += 1;
+            if (password.length >= 12) strength += 1;
+            
+            // Verificar complejidad
+            if (/[A-Z]/.test(password)) strength += 1; // Mayúsculas
+            if (/[0-9]/.test(password)) strength += 1; // Números
+            if (/[^A-Za-z0-9]/.test(password)) strength += 1; // Caracteres especiales
+            
+            // Actualizar medidor
+            const width = (strength / 5) * 100;
+            meter.style.width = width + '%';
+            
+            // Cambiar color según fuerza
+            if (strength <= 2) {
+                meter.style.backgroundColor = '#ff5252'; // Rojo (débil)
+            } else if (strength <= 3) {
+                meter.style.backgroundColor = '#ffb74d'; // Naranja (media)
+            } else {
+                meter.style.backgroundColor = '#4CAF50'; // Verde (fuerte)
+            }
+        }
+        
+        // Mostrar hint al enfocar el campo de contraseña
+        document.getElementById('contrasena').addEventListener('focus', function() {
+            document.getElementById('passwordHint').style.display = 'block';
+        });
+        
+        // Ocultar hint si el campo está vacío al perder el foco
+        document.getElementById('contrasena').addEventListener('blur', function() {
+            if (this.value.length === 0) {
+                document.getElementById('passwordHint').style.display = 'none';
+            }
+        });
+    </script>
+</body>
+</html>

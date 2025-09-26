@@ -1,0 +1,243 @@
+{% extends 'base.html'%}
+
+{% block title %}Financial Loans - Lista de Créditos{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap">
+        <h2 class="fw-bold text-white mb-3 mb-md-0"><i class="fas fa-file-invoice-dollar me-2"></i>Lista de Créditos</h2>
+        <div>
+            <a href="{{ url_for('creditos_pdf')}}" class="btn btn-success me-2">
+                <i class="fas fa-file-pdf me-1"></i> Descargar PDF
+            </a>
+            <a href="{{ url_for('create_creditos')}}" class="btn btn-primary me-2">
+                <i class="fa-solid fa-plus me-1"></i> Agregar Crédito
+            </a>
+        </div>
+    </div>
+
+    <!-- Cards con estadísticas -->
+    <div class="row mb-4">
+        <div class="col-md-4 mb-3">
+            <div class="card bg-gradient border-0 shadow-lg" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                <div class="card-body p-4">
+                    <div class="row align-items-center">
+                        <div class="col-auto">
+                            <div class="bg-white bg-opacity-20 rounded-circle p-3">
+                                <i class="fas fa-file-invoice-dollar fa-2x text-white"></i>
+                            </div>
+                        </div>
+                        <div class="col">
+                            <h5 class="text-white mb-1 fw-bold">Total de Créditos</h5>
+                            <h2 class="text-white mb-0 fw-bold">{{ total_creditos }}</h2>
+                            <small class="text-white-50">Créditos registrados</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4 mb-3">
+            <div class="card bg-gradient border-0 shadow-lg" style="background: linear-gradient(135deg, #56ab2f 0%, #a8e6cf 100%);">
+                <div class="card-body p-4">
+                    <div class="row align-items-center">
+                        <div class="col-auto">
+                            <div class="bg-white bg-opacity-20 rounded-circle p-3">
+                                <i class="fas fa-check-circle fa-2x text-white"></i>
+                            </div>
+                        </div>
+                        <div class="col">
+                            <h5 class="text-white mb-1 fw-bold">Créditos Vigentes</h5>
+                            <h2 class="text-white mb-0 fw-bold">{{ creditos_vigentes }}</h2>
+                            <small class="text-white-50">Activos y al día</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4 mb-3">
+            <div class="card bg-gradient border-0 shadow-lg" style="background: linear-gradient(135deg, #ff416c 0%, #ff4b2b 100%);">
+                <div class="card-body p-4">
+                    <div class="row align-items-center">
+                        <div class="col-auto">
+                            <div class="bg-white bg-opacity-20 rounded-circle p-3">
+                                <i class="fas fa-exclamation-triangle fa-2x text-white"></i>
+                            </div>
+                        </div>
+                        <div class="col">
+                            <h5 class="text-white mb-1 fw-bold">Créditos Vencidos</h5>
+                            <h2 class="text-white mb-0 fw-bold">{{ creditos_vencidos }}</h2>
+                            <small class="text-white-50">Requieren atención</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card border-0 shadow-lg bg-dark text-white">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <div class="mb-3">
+                    <input type="text" id="searchInput" class="form-control" placeholder="Buscar por nombre de cliente...">
+                </div>
+                <table class="table table-dark table-hover table-borderless mb-0">
+                    <thead class="bg-black">
+                        <tr>
+                            <th class="py-3">Estatus</th>
+                            <th class="py-3">Cliente</th>
+                            <th class="py-3">Fecha Inicio</th>
+                            <th class="py-3">Fecha Fin</th>
+                            <th class="py-3">Total</th>
+                            <th class="py-3">Restante</th>
+                            <th class="py-3 text-end">Opciones</th>
+                        </tr>
+                    </thead>
+                    <tbody class="table-group-divider" id="creditosTable">
+                        {% for credito in creditos|sort(attribute='fecha_fin') %}
+                        <tr>
+                            <td class="align-middle">
+                                {% if credito.total == 0 %}
+                                    <span class="badge bg-success">Pagado</span>
+                                {% elif credito.fecha_fin < current_date %}
+                                    <span class="badge bg-danger">Vencido ({{ (current_date - credito.fecha_fin).days }} días)</span>
+                                {% elif (credito.fecha_fin - current_date).days <= 20 and credito.total > 0 %}
+                                    <span class="badge bg-success">Próximo a vencer ({{ (credito.fecha_fin - current_date).days }} días)</span>
+                                {% else %}
+                                    <span class="badge bg-primary">Vigente</span>
+                                {% endif %}
+                            </td>
+                            <td class="align-middle">{{ credito.cliente.nombre }} {{ credito.cliente.ap_paterno }} {{ credito.cliente.ap_materno }}</td>   
+                            <td class="align-middle">{{ credito.fecha_inicio.strftime('%d/%m/%Y') }}</td>
+                            <td class="align-middle">{{ credito.fecha_fin.strftime('%d/%m/%Y') }}</td>
+                            <td class="align-middle">${{ "{:,.2f}".format(credito.total_original) }}</td>   
+                            <td class="align-middle">${{ "{:,.2f}".format(credito.total) }}</td>   
+                            <td class="align-middle text-end">
+                                <div class="d-flex justify-content-end gap-2 flex-wrap">
+                                    {% if credito.total > 0 %}
+                                    <a href="{{ url_for('detalle_credito', id_cliente=credito.id_cliente, id_credito=credito.id_credito) }}" 
+                                       class="btn btn-sm btn-outline-primary">
+                                        <i class="fa-solid fa-money-bill-wave me-1"></i> Pagos
+                                    </a>
+                                    {% endif %}
+                                    {% if credito.total == 0 %}
+                                    <button class="btn btn-sm btn-outline-danger delete-credit-btn" 
+                                            data-url="{{ url_for('delete_credito', id_credito=credito.id_credito) }}">
+                                        <i class="fa-solid fa-trash"></i>
+                                    </button>
+                                    {% endif %}
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    body {
+        background-color: #121212;
+    }
+    .table-dark {
+        --bs-table-bg: #1e1e1e;
+        --bs-table-striped-bg: #252525;
+        --bs-table-hover-bg: #2e2e2e;
+        border-color: #444;
+    }
+    .card {
+        border-radius: 10px;
+        overflow: hidden;
+    }
+    .table {
+        margin-bottom: 0;
+    }
+    .badge {
+        font-size: 0.85em;
+        padding: 5px 8px;
+    }
+    .btn {
+        border-radius: 6px;
+    }
+    .bg-orange {
+        background-color: #ff9800 !important;
+        color: #fff;
+    }
+    .bg-gradient {
+        border-radius: 15px;
+        transition: transform 0.2s ease;
+    }
+    .bg-gradient:hover {
+        transform: translateY(-2px);
+    }
+    .bg-opacity-20 {
+        background-color: rgba(255, 255, 255, 0.2) !important;
+    }
+    .text-white-50 {
+        color: rgba(255, 255, 255, 0.75) !important;
+    }
+    @media (max-width: 768px) {
+        .d-flex {
+            flex-direction: column !important;
+        }
+        .text-end {
+            text-align: start !important;
+        }
+    }
+</style>
+
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+    document.getElementById('searchInput').addEventListener('input', function () {
+        const filter = this.value.toLowerCase();
+        const rows = document.querySelectorAll('#creditosTable tr');
+        rows.forEach(row => {
+            const cliente = row.querySelector('td:nth-child(2)').textContent.toLowerCase();
+            row.style.display = cliente.includes(filter) ? '' : 'none';
+        });
+    });
+
+    document.querySelectorAll('.delete-credit-btn').forEach(button => {
+        button.addEventListener('click', function () {
+            const url = this.getAttribute('data-url');
+            Swal.fire({
+                title: '¿Estás seguro?',
+                text: "No podrás revertir esta acción.",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#d33',
+                confirmButtonText: 'Sí, eliminar',
+                cancelButtonText: 'Cancelar'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    window.location.href = url;
+                }
+            });
+        });
+    });
+
+    // Ordenar la tabla colocando los créditos vencidos primero, luego los próximos a vencer
+    document.addEventListener('DOMContentLoaded', function () {
+        const tableBody = document.getElementById('creditosTable');
+        const rows = Array.from(tableBody.querySelectorAll('tr'));
+
+        rows.sort((a, b) => {
+            const statusA = a.querySelector('td:first-child .badge').textContent.trim();
+            const statusB = b.querySelector('td:first-child .badge').textContent.trim();
+
+            if (statusA.includes('Vencido')) return -1;
+            if (statusB.includes('Vencido')) return 1;
+            if (statusA.includes('Próximo a vencer')) return -1;
+            if (statusB.includes('Próximo a vencer')) return 1;
+            return 0;
+        });
+
+        rows.forEach(row => tableBody.appendChild(row));
+    });
+</script>
+{% endblock %}
+

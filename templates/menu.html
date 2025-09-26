@@ -1,0 +1,148 @@
+{% extends 'base.html'%}
+
+{%block title%}Financial Loans - Dashboard{%endblock%}
+
+{% block content %}
+<div class="container py-4">
+    <h2 class="text-center mb-4 fw-bold text-white">Panel de Administración</h2>
+
+    <div class="row g-4">
+        <div class="col-md-6">
+            <div class="card border-0 shadow-lg h-100 hover-effect bg-dark text-white">
+                <div class="card-header bg-black py-3">
+                    <h5 class="card-title text-center mb-0 fw-semibold">
+                        <i class="fas fa-file-invoice-dollar me-2 text-primary"></i>Créditos Vigentes
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <p class="card-text text-light mb-4">
+                        Gestión completa de todos los créditos activos en el sistema.
+                        Visualiza, edita y administra.
+                    </p>
+                    <div class="text-center">
+                        <a href="{{ url_for('creditos')}}" class="btn btn-outline-primary px-4 rounded-pill">
+                            <i class="fa-solid fa-arrow-right me-2"></i>Acceder
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card border-0 shadow-lg h-100 hover-effect bg-dark text-white">
+                <div class="card-header bg-black py-3">
+                    <h5 class="card-title text-center mb-0 fw-semibold">
+                        <i class="fas fa-users me-2 text-success"></i>Clientes Registrados
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <p class="card-text text-light mb-4">
+                        Base de datos completa de clientes. Administra información personal.
+                    </p>
+                    <div class="text-center">
+                        <a href="{{ url_for('index')}}" class="btn btn-outline-success px-4 rounded-pill">
+                            <i class="fa-solid fa-arrow-right me-2"></i>Acceder
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card border-0 shadow-lg h-100 hover-effect bg-dark text-white">
+                <div class="card-header bg-black py-3">
+                    <h5 class="card-title text-center mb-0 fw-semibold">
+                        <i class="fas fa-cash-register me-2 text-warning"></i>Tesorería
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <p class="card-text text-light mb-4">
+                        Gestión financiera completa. Visualiza el estado económico
+                        general de la financiera.
+                    </p>
+                    <div class="text-center">
+                        <a href="{{ url_for('total')}}" class="btn btn-outline-warning px-4 rounded-pill">
+                            <i class="fa-solid fa-arrow-right me-2"></i>Acceder
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card border-0 shadow-lg h-100 hover-effect bg-dark text-white">
+                <div class="card-header bg-black py-3">
+                    <h5 class="card-title text-center mb-0 fw-semibold">
+                        <i class="fas fa-clock me-2 text-info"></i>Calendario y Reloj
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-4 text-center">
+                        <div id="calendar" class="bg-light text-dark p-3 rounded"></div>
+                    </div>
+                    <div class="text-center">
+                        <div id="clock" class="text-light fw-bold fs-5"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .hover-effect {
+        transition: all 0.3s ease;
+        border-radius: 10px;
+    }
+
+    .hover-effect:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3) !important;
+    }
+
+    .card-header {
+        border-top-left-radius: 10px !important;
+        border-top-right-radius: 10px !important;
+    }
+
+    .rounded-pill {
+        padding: 8px 20px;
+    }
+
+    body {
+        background-color: #121212;
+    }
+
+    .bg-black {
+        background-color: #000 !important;
+    }
+
+    #calendar {
+        font-size: 1rem;
+        font-weight: bold;
+    }
+
+    #clock {
+        font-size: 1.2rem;
+    }
+</style>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        // Mostrar la fecha actual en el calendario
+        const calendar = document.getElementById('calendar');
+        const today = new Date();
+        const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+        calendar.textContent = today.toLocaleDateString('es-ES', options);
+
+        // Actualizar el reloj cada segundo
+        const clock = document.getElementById('clock');
+        function updateClock() {
+            const now = new Date();
+            clock.textContent = now.toLocaleTimeString('es-ES');
+        }
+        setInterval(updateClock, 1000);
+        updateClock(); // Inicializar el reloj inmediatamente
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,93 @@
+{% extends 'base.html'%}
+
+{% block title %}Financial Loans - Actualizar Cliente{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-lg bg-dark text-white">
+                <div class="card-header bg-black py-3">
+                    <h4 class="card-title text-center mb-0">
+                        <i class="fas fa-user-edit me-2"></i>Actualizar Datos del Cliente
+                    </h4>
+                </div>
+                <div class="card-body p-4">
+                    <form action="{{ url_for('update_cliente', id_cliente=cliente.id_cliente)}}" method="POST">
+                        
+                        <!-- Nombre -->
+                        <div class="mb-4">
+                            <label for="nombre" class="form-label fw-semibold">Nombre</label>
+                            <input type="text" class="form-control bg-secondary text-white border-dark" 
+                                   id="nombre" name="nombre" required 
+                                   placeholder="Ingresa el nombre" value="{{cliente.nombre}}">
+                        </div>
+
+                        <!-- Apellidos -->
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-6">
+                                <label for="ap_paterno" class="form-label fw-semibold">Apellido Paterno</label>
+                                <input type="text" class="form-control bg-secondary text-white border-dark" 
+                                       id="ap_paterno" name="ap_paterno" required 
+                                       value="{{cliente.ap_paterno}}">
+                            </div>
+                            <div class="col-md-6">
+                                <label for="ap_materno" class="form-label fw-semibold">Apellido Materno</label>
+                                <input type="text" class="form-control bg-secondary text-white border-dark" 
+                                       id="ap_materno" name="ap_materno" required 
+                                       value="{{cliente.ap_materno}}">
+                            </div>
+                        </div>
+
+                        <!-- Teléfono -->
+                        <div class="mb-4">
+                            <label for="telefono" class="form-label fw-semibold">Teléfono</label>
+                            <input type="text" class="form-control bg-secondary text-white border-dark" 
+                                   id="telefono" name="telefono" required 
+                                   value="{{cliente.telefono}}">
+                        </div>
+
+                        <!-- Botones -->
+                        <div class="d-flex justify-content-between mt-4">
+                            <a href="{{ url_for('index')}}" class="btn btn-outline-light flex-grow-1 me-3">
+                                <i class="fas fa-times me-2"></i> Cancelar
+                            </a>
+                            <button type="submit" class="btn btn-primary flex-grow-1">
+                                <i class="fas fa-save me-2"></i> Guardar Cambios
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    body {
+        background-color: #121212;
+    }
+    .card {
+        border-radius: 10px;
+    }
+    .form-control {
+        background-color: #333;
+        border: 1px solid #444;
+        color: white;
+    }
+    .form-control:focus {
+        background-color: #444;
+        color: white;
+        border-color: #555;
+        box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+    }
+    .btn {
+        border-radius: 8px;
+        padding: 10px;
+        font-weight: 500;
+    }
+    .btn-outline-light:hover {
+        background-color: rgba(255, 255, 255, 0.1);
+    }
+</style>
+{% endblock %}
