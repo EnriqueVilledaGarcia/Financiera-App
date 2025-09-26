@@ -609,33 +609,75 @@ def total():
             try:
                 valor_a_convertir = None
                 
-                if credito.total is not None:
-                    if isinstance(credito.total, (int, float)):
-                        valor_a_convertir = float(credito.total)
-                    elif isinstance(credito.total, str):
-                        total_limpio = credito.total.replace(',', '').replace('$', '').strip()
-                        if total_limpio and total_limpio not in ['', '0', '0.0', '0.00']:
+                if credito.total is not None and credito.total != '':
+                    # Convertir a string para procesamiento uniforme
+                    total_str = str(credito.total).strip()
+                    
+                    if total_str:
+                        # Limpiar el string de caracteres no numéricos comunes
+                        total_limpio = total_str.replace(',', '').replace('$', '').replace(' ', '')
+                        
+                        # Intentar diferentes formatos
+                        if total_limpio and total_limpio not in ['', '0', '0.0', '0.00', 'None', 'null']:
                             try:
+                                # Manejar casos especiales como decimales con punto o coma
+                                if ',' in total_limpio and '.' not in total_limpio:
+                                    # Caso: formato europeo con coma como decimal (ej: "1500,50")
+                                    total_limpio = total_limpio.replace(',', '.')
+                                elif ',' in total_limpio and '.' in total_limpio:
+                                    # Caso: formato con separadores de miles (ej: "1,500.50")
+                                    partes = total_limpio.split('.')
+                                    if len(partes) == 2 and len(partes[1]) <= 2:
+                                        # El último punto es decimal
+                                        total_limpio = partes[0].replace(',', '') + '.' + partes[1]
+                                    else:
+                                        # Todos son separadores de miles
+                                        total_limpio = total_limpio.replace(',', '').replace('.', '')
+                                
                                 valor_a_convertir = float(total_limpio)
-                            except ValueError:
-                                continue
+                                
+                            except (ValueError, TypeError):
+                                # Si falla la conversión, intentar como entero
+                                try:
+                                    valor_a_convertir = float(int(total_limpio.split('.')[0]))
+                                except (ValueError, TypeError, IndexError):
+                                    continue
                 
+                # Solo sumar valores válidos y mayores a 0
                 if valor_a_convertir is not None and valor_a_convertir > 0:
                     monto_total += valor_a_convertir
                     
-            except (ValueError, TypeError):
+            except Exception:
+                # Si hay cualquier error, continuar con el siguiente crédito
                 continue
 
-        # Recuperar los datos de la financiera
-        financiera_datos = FinancieraDatos.query.order_by(FinancieraDatos.id.desc()).first()
-        monto_caja = float(financiera_datos.monto_caja) if financiera_datos and financiera_datos.monto_caja else 0.0
-        monto_socios = float(financiera_datos.monto_socios) if financiera_datos and financiera_datos.monto_socios else 0.0
+        # Recuperar los datos de la financiera con manejo de errores
+        try:
+            financiera_datos = FinancieraDatos.query.order_by(FinancieraDatos.id.desc()).first()
+            monto_caja = 0.0
+            monto_socios = 0.0
+            
+            if financiera_datos:
+                try:
+                    monto_caja = float(str(financiera_datos.monto_caja).replace(',', '').replace('$', '')) if financiera_datos.monto_caja else 0.0
+                except (ValueError, TypeError):
+                    monto_caja = 0.0
+                    
+                try:
+                    monto_socios = float(str(financiera_datos.monto_socios).replace(',', '').replace('$', '')) if financiera_datos.monto_socios else 0.0
+                except (ValueError, TypeError):
+                    monto_socios = 0.0
+            
+        except Exception:
+            financiera_datos = None
+            monto_caja = 0.0
+            monto_socios = 0.0
         
         # Calcular el total de la financiera
         total_financiera = monto_total + monto_caja + monto_socios
         
     except Exception as e:
-        print(f"Error en cálculo de totales: {e}")
+        # Si hay cualquier error general, usar valores por defecto
         monto_total = 0.0
         monto_caja = 0.0  
         monto_socios = 0.0
