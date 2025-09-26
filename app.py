@@ -695,12 +695,22 @@ def total():
     
     for credito in creditos:
         try:
-            # Intentar parsear la fecha en formato Y-m-d
-            if '-' in credito.fecha_inicio:
-                fecha_obj = datetime.strptime(credito.fecha_inicio, '%Y-%m-%d')
+            # Verificar si fecha_inicio es una cadena o ya es un objeto date/datetime
+            if isinstance(credito.fecha_inicio, (date, datetime)):
+                fecha_obj = credito.fecha_inicio
+                if isinstance(fecha_obj, date) and not isinstance(fecha_obj, datetime):
+                    # Si es un objeto date, crear un datetime para mantener consistencia
+                    fecha_obj = datetime.combine(fecha_obj, datetime.min.time())
+            elif isinstance(credito.fecha_inicio, str):
+                # Intentar parsear la fecha en formato Y-m-d
+                if '-' in credito.fecha_inicio:
+                    fecha_obj = datetime.strptime(credito.fecha_inicio, '%Y-%m-%d')
+                else:
+                    # Intentar formato d/m/Y
+                    fecha_obj = datetime.strptime(credito.fecha_inicio, '%d/%m/%Y')
             else:
-                # Intentar formato d/m/Y
-                fecha_obj = datetime.strptime(credito.fecha_inicio, '%d/%m/%Y')
+                # Si no es ni string ni date, continuar con el siguiente crédito
+                continue
             
             año = fecha_obj.year
             mes = fecha_obj.month
@@ -716,7 +726,7 @@ def total():
             
             creditos_por_año_mes[año][mes]['cantidad'] += 1
             
-        except (ValueError, AttributeError):
+        except (ValueError, AttributeError, TypeError):
             # Si no se puede parsear la fecha, continuar
             continue
     
