@@ -673,8 +673,8 @@ def total():
             monto_caja = 0.0
             monto_socios = 0.0
         
-        # Calcular el total de la financiera
-        total_financiera = monto_total + monto_caja + monto_socios
+        # Calcular el total de la financiera (Capital Caja + Créditos por Cobrar - Capital de Socios)
+        total_financiera = monto_total + monto_caja - monto_socios
         
     except Exception as e:
         # Si hay cualquier error general, usar valores por defecto
@@ -721,8 +721,8 @@ def total():
 
             db.session.commit()
 
-            # Recalcular el total financiero
-            total_financiera = monto_total + monto_caja + monto_socios
+            # Recalcular el total financiero (Capital Caja + Créditos por Cobrar - Capital de Socios)
+            total_financiera = monto_total + monto_caja - monto_socios
             
             flash("Datos actualizados correctamente", "success")
             
