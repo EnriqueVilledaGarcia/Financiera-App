@@ -107,6 +107,9 @@
             <!-- Contenido colapsable del navbar -->
             <div class="collapse navbar-collapse" id="navbarNav">
                 <div class="navbar-nav ms-auto"> <!-- ms-auto empuja el contenido a la derecha -->
+                    <a href="{{ url_for('dashboard') }}" class="nav-link btn-nav-link">
+                        <i class="fas fa-chart-line"></i> Análisis de datos
+                    </a>
                     <a href="{{ url_for('register') }}" class="nav-link btn-nav-link">
                         <i class="fas fa-user-plus me-1"></i> Nuevo usuario
                     </a>
@@ -116,6 +119,7 @@
                     <a href="{{ url_for('logout') }}" class="nav-link btn-nav-link">
                         <i class="fas fa-sign-out-alt me-1"></i> Cerrar sesión
                     </a>
+                    
                 </div>
             </div>
         </div>
