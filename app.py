@@ -843,9 +843,6 @@ def logout():
     session.clear()  # Eliminar todos los datos de la sesión
     return redirect(url_for('login'))  # Redirigir al login después de cerrar sesión
 
-@app.route('/dashboard')
-def dashboard():
-    return render_template('dashboard.html')
 
 
 if __name__=='__main__':
