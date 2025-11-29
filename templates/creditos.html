@@ -168,42 +168,45 @@
     .btn {
         border-radius: 6px;
     }
-    /* Estilo para el botón 'Regresar' en tema oscuro */
+    /* Restaurar estilo visual original de botones claros (color/borde/hover)
+       pero dejar el tamaño controlado por `base.html` */
     .btn-outline-light {
         color: #ffffff;
         border-color: rgba(255,255,255,0.15);
+        background-color: transparent;
     }
     .btn-outline-light:hover {
         background-color: rgba(255,255,255,0.06);
         color: #ffffff;
     }
-    /* Botones responsive: icon-only en pantallas pequeñas, pero disposición horizontal */
-    .btn-responsive { min-width: 0; }
+    /* Estilo para el botón 'Regresar' en tema oscuro
+       (se eliminó la definición local de `.btn-outline-light` y `.btn-responsive`
+        para heredar los estilos centrales definidos en `base.html`) */
+    /* Mantener sólo las reglas de layout/responsive relacionadas con header-actions */
     @media (max-width: 768px) {
-        .btn-responsive {
-            width: auto;
-            display: inline-flex;
-            justify-content: center;
-            align-items: center;
-            padding-left: 0.6rem;
-            padding-right: 0.6rem;
-        }
-        .btn-responsive + .btn-responsive {
-            margin-top: 0;
-            margin-left: 0.5rem;
-        }
-        /* Mostrar solo el icono en pantallas pequeñas */
-        .btn-responsive .btn-text {
-            display: none;
-        }
-        .btn-responsive i {
-            margin-right: 0;
-        }
-        /* Forzar acciones de cabecera en fila, anula regla global */
         .header-actions {
-            flex-direction: row !important;
-            align-items: center !important;
+            width: 100%;
+            margin-top: 0.6rem;
+            display: flex;
+            justify-content: flex-start;
+            align-items: center;
+            gap: 0.5rem;
+            flex-wrap: wrap;
         }
+        /* Asegurar que el título ocupe la fila superior en móviles */
+        .d-flex.justify-content-between h2 {
+            width: 100%;
+            margin-bottom: 0.5rem;
+        }
+    }
+    @media (max-width: 576px) {
+        .header-actions { gap: 0.4rem; }
+    }
+    /* En móviles: mostrar solo el icono dentro de los botones (ocultar texto)
+       Mantener tamaños definidos en `base.html` para touch targets. */
+    @media (max-width: 576px) {
+        .header-actions .btn-responsive .btn-text { display: none; }
+        .header-actions .btn-responsive i { font-size: 1.15rem; margin: 0; }
     }
     .bg-orange {
         background-color: #ff9800 !important;
