@@ -6,12 +6,18 @@
 <div class="container py-4">
     <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap">
         <h2 class="fw-bold text-white mb-3 mb-md-0"><i class="fas fa-file-invoice-dollar me-2"></i>Lista de Créditos</h2>
-        <div>
-            <a href="{{ url_for('creditos_pdf')}}" class="btn btn-success me-2">
-                <i class="fas fa-file-pdf me-1"></i> Generar PDF
+        <div class="d-flex align-items-center gap-2 header-actions">
+            <a href="{{ url_for('menu')}}" class="btn btn-outline-light btn-responsive">
+                <i class="fas fa-arrow-left"></i>
+                <span class="btn-text ms-1">Regresar</span>
             </a>
-            <a href="{{ url_for('create_creditos')}}" class="btn btn-primary me-2">
-                <i class="fa-solid fa-plus me-1"></i> Agregar Crédito
+            <a href="{{ url_for('creditos_pdf')}}" class="btn btn-outline-light btn-responsive">
+                <i class="fas fa-file-pdf"></i>
+                <span class="btn-text ms-1">Generar PDF</span>
+            </a>
+            <a href="{{ url_for('create_creditos')}}" class="btn btn-outline-light btn-responsive">
+                <i class="fa-solid fa-plus"></i>
+                <span class="btn-text ms-1">Agregar Crédito</span>
             </a>
         </div>
     </div>
@@ -162,6 +168,43 @@
     .btn {
         border-radius: 6px;
     }
+    /* Estilo para el botón 'Regresar' en tema oscuro */
+    .btn-outline-light {
+        color: #ffffff;
+        border-color: rgba(255,255,255,0.15);
+    }
+    .btn-outline-light:hover {
+        background-color: rgba(255,255,255,0.06);
+        color: #ffffff;
+    }
+    /* Botones responsive: icon-only en pantallas pequeñas, pero disposición horizontal */
+    .btn-responsive { min-width: 0; }
+    @media (max-width: 768px) {
+        .btn-responsive {
+            width: auto;
+            display: inline-flex;
+            justify-content: center;
+            align-items: center;
+            padding-left: 0.6rem;
+            padding-right: 0.6rem;
+        }
+        .btn-responsive + .btn-responsive {
+            margin-top: 0;
+            margin-left: 0.5rem;
+        }
+        /* Mostrar solo el icono en pantallas pequeñas */
+        .btn-responsive .btn-text {
+            display: none;
+        }
+        .btn-responsive i {
+            margin-right: 0;
+        }
+        /* Forzar acciones de cabecera en fila, anula regla global */
+        .header-actions {
+            flex-direction: row !important;
+            align-items: center !important;
+        }
+    }
     .bg-orange {
         background-color: #ff9800 !important;
         color: #fff;
@@ -180,7 +223,7 @@
         color: rgba(255, 255, 255, 0.75) !important;
     }
     @media (max-width: 768px) {
-        .d-flex {
+        .d-flex:not(.header-actions) {
             flex-direction: column !important;
         }
         .text-end {

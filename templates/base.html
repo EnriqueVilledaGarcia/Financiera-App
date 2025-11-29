@@ -32,6 +32,26 @@
             color: #000;
         }
 
+        /* Botones responsive: icon-only en pantallas pequeñas, pero disposición horizontal */
+        .btn-responsive { min-width: 0; }
+        @media (max-width: 768px) {
+            .btn-responsive {
+                width: auto;
+                display: inline-flex;
+                justify-content: center;
+                align-items: center;
+                padding-left: 0.6rem;
+                padding-right: 0.6rem;
+            }
+            .btn-responsive + .btn-responsive {
+                margin-top: 0;
+                margin-left: 0.5rem;
+            }
+            /* Mostrar solo el icono en pantallas pequeñas */
+            .btn-responsive .btn-text { display: none; }
+            .btn-responsive i { margin-right: 0; }
+        }
+
         /* Estilos para los nav-links cuando actúan como botones */
         .btn-nav-link {
             color: #fff !important;
@@ -48,6 +68,53 @@
             background-color: #fff;
             color: #000 !important;
         }
+
+        /* Insignia circular de usuario dentro del botón */
+        .user-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.2rem 0.5rem;
+        }
+        .user-circle {
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            background: #fff;
+            color: #000;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.9rem;
+            flex-shrink: 0;
+            border: 1px solid rgba(255,255,255,0.6);
+        }
+        /* Mantener el texto en una sola línea y evitar que el círculo se comprima */
+        .user-btn .user-text { white-space: nowrap; }
+        /* Cambio de colores al pasar el ratón, coherente con los demás botones */
+        .user-btn:hover .user-circle {
+            background: #000;
+            color: #fff;
+            border-color: #fff;
+        }
+
+        /* Estilos para el dropdown del usuario (coherente con navbar oscuro) */
+        .navbar .dropdown-menu {
+            background-color: #000;
+            border: 1px solid rgba(255,255,255,0.08);
+            min-width: 200px;
+            padding: 0.25rem 0;
+        }
+        .navbar .dropdown-item {
+            color: #fff;
+            padding: 0.5rem 1rem;
+        }
+        .navbar .dropdown-item:hover {
+            background-color: rgba(255,255,255,0.06);
+            color: #fff;
+        }
+        /* Ocultar la flecha/caret por diseño, el círculo ya indica interactivo */
+        .dropdown-toggle::after { display: none; }
 
         /* Estilo para el botón hamburguesa */
         .navbar-toggler {
@@ -98,27 +165,36 @@
                 <img src="{{ url_for('static', filename='logotipo.png') }}" alt="Financial Loans Logo" class="img-fluid">
             </a>
             
-            <!-- Botón hamburguesa para pantallas pequeñas -->
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" 
-                    aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
-                <span class="navbar-toggler-icon"></span>
-            </button>
+            <!-- Botón hamburguesa eliminado por petición: no mostrar el icono de 3 líneas -->
             
             <!-- Contenido colapsable del navbar -->
             <div class="collapse navbar-collapse" id="navbarNav">
                 <div class="navbar-nav ms-auto"> <!-- ms-auto empuja el contenido a la derecha -->
-                    
-                    <a href="{{ url_for('register') }}" class="nav-link btn-nav-link">
-                        <i class="fas fa-user-plus me-1"></i> Nuevo usuario
-                    </a>
-                    <a href="{{ url_for('menu') }}" class="nav-link btn-nav-link">
-                        <i class="fas fa-arrow-left me-1"></i> Regresar
-                    </a>
-                    <a href="{{ url_for('logout') }}" class="nav-link btn-nav-link">
-                        <i class="fas fa-sign-out-alt me-1"></i> Cerrar sesión
-                    </a>
-                    
+                    <!-- Aquí puedes agregar otros elementos del navbar que deban colapsar -->
                 </div>
+            </div>
+            <!-- Botón de usuario fuera del collapsible para que siempre sea visible en móviles -->
+            <div class="nav-item dropdown ms-auto">
+                <a href="#" class="nav-link btn btn-outline-light btn-responsive dropdown-toggle d-flex align-items-center user-btn" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false" title="Cuenta">
+                    <span class="user-circle" aria-hidden="true">
+                        {% if session.usuario %}
+                            {{ session.usuario[0]|upper }}
+                        {% else %}
+                            <i class="fas fa-user"></i>
+                        {% endif %}
+                    </span>
+                    <span class="btn-text ms-1 user-text">
+                        {% if session.usuario %}
+                            {{ session.usuario }}
+                        {% else %}
+                            Cuenta
+                        {% endif %}
+                    </span>
+                </a>
+                <ul class="dropdown-menu dropdown-menu-end mt-2" aria-labelledby="userDropdown">
+                    <li><a class="dropdown-item" href="{{ url_for('register') }}"><i class="fas fa-user-plus me-1"></i> Nuevo usuario</a></li>
+                    <li><a class="dropdown-item" href="{{ url_for('logout') }}"><i class="fas fa-sign-out-alt me-1"></i> Cerrar sesión</a></li>
+                </ul>
             </div>
         </div>
     </nav>

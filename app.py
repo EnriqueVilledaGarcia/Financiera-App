@@ -518,6 +518,135 @@ def detalle_credito(id_cliente, id_credito):
 
     return render_template('fechas_pagos.html', creditos=creditos, cliente=cliente, current_date=current_date)
 
+
+@app.route('/detalle_credito/<int:id_cliente>/<int:id_credito>/pdf')
+@login_required
+def detalle_credito_pdf(id_cliente, id_credito):
+    try:
+        # Obtener el crédito y el cliente (misma lógica que detalle_credito)
+        creditos = Creditos.query.filter_by(id_credito=id_credito).all()
+        cliente = Cliente.query.filter_by(id_cliente=id_cliente).first()
+        current_date = date.today()
+
+        for credito in creditos:
+            fecha_pagos = []
+            if isinstance(credito.fecha_inicio, str):
+                fecha_actual = datetime.strptime(credito.fecha_inicio, '%Y-%m-%d').date() + timedelta(days=7)
+            else:
+                fecha_actual = credito.fecha_inicio + timedelta(days=7)
+
+            for _ in range(int(credito.no_pagos)):
+                fecha_pagos.append(fecha_actual.strftime('%Y-%m-%d'))
+                fecha_actual += timedelta(days=7)
+
+            credito.fechas_pagos = fecha_pagos
+
+            pagos = Pagos.query.filter_by(id_credito=credito.id_credito).all()
+            for pago in pagos:
+                pago.fecha = pago.fecha.strftime('%Y-%m-%d') if isinstance(pago.fecha, datetime) else pago.fecha
+            credito.pagos = pagos
+
+        # Generar PDF con ReportLab
+        buffer = io.BytesIO()
+        doc = SimpleDocTemplate(buffer, pagesize=A4, rightMargin=30, leftMargin=30, topMargin=30, bottomMargin=30)
+        styles = getSampleStyleSheet()
+        title_style = ParagraphStyle('Title', parent=styles['Heading1'], alignment=TA_CENTER, spaceAfter=12)
+        normal_center = ParagraphStyle('NormalCenter', parent=styles['Normal'], alignment=TA_CENTER)
+
+        elements = []
+
+        # Logo opcional
+        try:
+            logo_path = os.path.join(app.static_folder, 'logotipo.png')
+            if os.path.exists(logo_path):
+                logo = Image(logo_path, width=2*inch, height=1*inch)
+                logo.hAlign = 'CENTER'
+                elements.append(logo)
+                elements.append(Spacer(1, 12))
+        except:
+            pass
+
+        # Título y cliente
+        elements.append(Paragraph('Detalle de Pagos', title_style))
+        cliente_nombre = f"{cliente.nombre} {cliente.ap_paterno} {cliente.ap_materno}" if cliente else 'N/A'
+        elements.append(Paragraph(f'Cliente: {cliente_nombre}', normal_center))
+        elements.append(Paragraph(f'Fecha de generación: {datetime.now().strftime("%d/%m/%Y %H:%M")}', normal_center))
+        elements.append(Spacer(1, 12))
+
+        # Por cada crédito crear una tabla de fechas y status
+        for credito in creditos:
+            try:
+                elementos_tabla = []
+                encabezado = ['Fecha de pago', 'Monto a pagar', 'Monto pagado', 'Status']
+                elementos_tabla.append(encabezado)
+
+                cantidad_por_pago = 0.0
+                try:
+                    cantidad_por_pago = float(credito.total_original) / int(credito.no_pagos)
+                except Exception:
+                    try:
+                        cantidad_por_pago = float(credito.total) / int(credito.no_pagos)
+                    except Exception:
+                        cantidad_por_pago = 0.0
+
+                total_restante = float(credito.total) if credito.total is not None else 0.0
+
+                for fecha in credito.fechas_pagos:
+                    pago_realizado = [p for p in credito.pagos if p.fecha == fecha]
+                    if total_restante == 0:
+                        status = 'Pagado'
+                    elif pago_realizado:
+                        status = 'Pagado'
+                    elif fecha < current_date.strftime('%Y-%m-%d'):
+                        dias = (current_date - datetime.strptime(fecha, '%Y-%m-%d').date()).days
+                        status = f'Retrasado ({dias}d)'
+                    else:
+                        status = 'Pendiente'
+
+                    monto_pagado = None
+                    if pago_realizado:
+                        try:
+                            monto_pagado = float(pago_realizado[0].cantidad)
+                        except Exception:
+                            monto_pagado = None
+
+                    monto_pagado_str = f"${monto_pagado:,.2f}" if monto_pagado is not None else "-"
+
+                    elementos_tabla.append([fecha, f"${cantidad_por_pago:,.2f}", monto_pagado_str, status])
+
+                table = Table(elementos_tabla, colWidths=[1.8*inch, 1.4*inch, 1.6*inch, 1.6*inch])
+                table.setStyle(TableStyle([
+                    ('BACKGROUND', (0, 0), (-1, 0), colors.black),
+                    ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+                    ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+                    ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+                    ('FONTSIZE', (0, 0), (-1, 0), 10),
+                    ('BOTTOMPADDING', (0, 0), (-1, 0), 8),
+                    ('FONTNAME', (0, 1), (-1, -1), 'Helvetica'),
+                    ('FONTSIZE', (0, 1), (-1, -1), 9),
+                    ('GRID', (0, 0), (-1, -1), 0.5, colors.grey),
+                    ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.lightgrey])
+                ]))
+
+                elements.append(Paragraph(f'Crédito ID: {credito.id_credito} - Pagos: {credito.no_pagos}', styles['Normal']))
+                elements.append(Spacer(1, 6))
+                elements.append(table)
+                elements.append(Spacer(1, 12))
+            except Exception:
+                continue
+
+        doc.build(elements)
+        buffer.seek(0)
+
+        response = make_response(buffer.getvalue())
+        response.headers['Content-Type'] = 'application/pdf'
+        response.headers['Content-Disposition'] = f'attachment; filename=detalle_pago_{id_credito}_{datetime.now().strftime("%Y%m%d_%H%M%S")}.pdf'
+        buffer.close()
+        return response
+    except Exception as e:
+        flash(f'Error al generar el PDF: {str(e)}', 'danger')
+        return redirect(url_for('detalle_credito', id_cliente=id_cliente, id_credito=id_credito))
+
 @app.route('/credito/delete/<int:id_credito>')
 @login_required
 def delete_credito(id_credito):
@@ -842,6 +971,7 @@ def login():
 def logout():
     session.clear()  # Eliminar todos los datos de la sesión
     return redirect(url_for('login'))  # Redirigir al login después de cerrar sesión
+
 
 
 

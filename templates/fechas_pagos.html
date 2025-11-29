@@ -9,9 +9,18 @@
             <i class="fas fa-money-bill-wave me-2"></i>Detalle de Pagos - {{ cliente.nombre }} {{ cliente.ap_paterno
             }} {{ cliente.ap_materno }}
         </h2>
-        <a href="{{ url_for('creditos') }}" class="btn btn-outline-light btn-sm me-2">
-            <i class="fa-solid fa-xmark"></i> Salir
-        </a>
+        <div class="d-flex align-items-center gap-2 header-actions">
+            {% if creditos and cliente %}
+            <a href="{{ url_for('detalle_credito_pdf', id_cliente=cliente.id_cliente, id_credito=creditos[0].id_credito) }}" class="btn btn-outline-light btn-responsive">
+                <i class="fas fa-file-pdf"></i>
+                <span class="btn-text ms-1">Descargar PDF</span>
+            </a>
+            {% endif %}
+            <a href="{{ url_for('creditos') }}" class="btn btn-outline-light btn-responsive">
+                <i class="fa-solid fa-xmark"></i>
+                <span class="btn-text ms-1">Salir</span>
+            </a>
+        </div>
     </div>
 
     <!-- Cards de Estadísticas -->
@@ -67,9 +76,10 @@
                     <thead class="bg-black">
                         <tr>
                             <th class="text-center py-3">Fecha de pago</th>
-                            <th class="text-center py-3">Cantidad</th>
+                            <th class="text-center py-3">Monto a pagar</th>
+                            <th class="text-center py-3">Monto pagado</th>
                             <th class="text-center py-3">Status</th>
-                            <th class="text-center py-3">Opciones</th>
+                            <th class="text-center py-3">Acciones</th>
                         </tr>
                     </thead>
                     <tbody class="table-group-divider">
@@ -78,34 +88,37 @@
                             {% set total_restante = credito.total | float %}
                             {% for fecha in credito.fechas_pagos %}
                             <tr>
-                                <td class="text-center align-middle">{{ fecha }}</td>
-                                <td class="text-center align-middle">${{ "%.2f"|format(cantidad_por_pago) }}</td>
-                                <td class="text-center align-middle">
                                     {% set pago_realizado = credito.pagos | selectattr('fecha', 'equalto', fecha) | list %}
-                                    {% if total_restante == 0 %}
-                                        <span class="badge bg-success">Pagado</span>
-                                    {% elif pago_realizado %}
-                                        <span class="badge bg-success">Pagado</span>
-                                    {% elif fecha < current_date.strftime('%Y-%m-%d') %}
-                                        <span class="badge bg-danger">Retrasado {{ (current_date - datetime.strptime(fecha, '%Y-%m-%d').date()).days }} días</span>
-                                    {% else %}
-                                        <span class="badge bg-secondary">Pendiente</span>
-                                    {% endif %}
-                                </td>
+                                    <td class="text-center align-middle">{{ fecha }}</td>
+                                    <td class="text-center align-middle">${{ "%.2f"|format(cantidad_por_pago) }}</td>
+                                    <td class="text-center align-middle">{% if pago_realizado %}${{ '{:,.2f}'.format(pago_realizado[0].cantidad|float) }}{% else %}-{% endif %}</td>
+                                    <td class="text-center align-middle">
+                                        {% if total_restante == 0 %}
+                                            <span class="badge bg-success">Pagado</span>
+                                        {% elif pago_realizado %}
+                                            <span class="badge bg-success">Pagado</span>
+                                        {% elif fecha < current_date.strftime('%Y-%m-%d') %}
+                                            <span class="badge bg-danger">Retrasado {{ (current_date - datetime.strptime(fecha, '%Y-%m-%d').date()).days }} días</span>
+                                        {% else %}
+                                            <span class="badge bg-secondary">Pendiente</span>
+                                        {% endif %}
+                                    </td>
                                 <td class="text-center align-middle">
                                     {% if total_restante > 0 and not pago_realizado %}
                                         <div class="d-flex justify-content-center gap-2">
                                             <!-- Botón Pagar -->
                                             <form action="{{ url_for('marcar_pago', id_credito=credito.id_credito, fecha=fecha) }}" method="POST" class="m-0">
                                                 <input type="hidden" name="cantidad" value="{{ cantidad_por_pago | round(2) }}">
-                                                <button type="submit" class="btn btn-sm btn-success">
-                                                    <i class="fas fa-check me-1"></i> Pagar
+                                                <button type="submit" class="btn btn-sm btn-success btn-responsive">
+                                                    <i class="fas fa-check"></i>
+                                                    <span class="btn-text ms-1">Pagar</span>
                                                 </button>
                                             </form>
 
                                             <!-- Botón Otra Cantidad -->
-                                            <button class="btn btn-sm btn-warning" data-bs-toggle="modal" data-bs-target="#modalOtraCantidad{{ loop.index }}">
-                                                <i class="fas fa-pen-to-square me-1"></i> Otra Cantidad
+                                            <button class="btn btn-sm btn-warning btn-responsive" data-bs-toggle="modal" data-bs-target="#modalOtraCantidad{{ loop.index }}">
+                                                <i class="fas fa-pen-to-square"></i>
+                                                <span class="btn-text ms-1">Otra Cantidad</span>
                                             </button>
                                         </div>
 
@@ -131,11 +144,13 @@
                                                             </div>
                                                         </div>
                                                         <div class="modal-footer border-0 d-flex flex-row justify-content-between gap-2">
-                                                            <button type="button" class="btn btn-danger flex-fill" data-bs-dismiss="modal">
-                                                                <i class="fas fa-times me-1"></i> Cancelar
+                                                            <button type="button" class="btn btn-danger flex-fill btn-responsive" data-bs-dismiss="modal">
+                                                                <i class="fas fa-times"></i>
+                                                                <span class="btn-text ms-1">Cancelar</span>
                                                             </button>
-                                                            <button type="submit" class="btn btn-primary flex-fill">
-                                                                <i class="fas fa-check me-1"></i> Confirmar Pago
+                                                            <button type="submit" class="btn btn-primary flex-fill btn-responsive">
+                                                                <i class="fas fa-check"></i>
+                                                                <span class="btn-text ms-1">Confirmar Pago</span>
                                                             </button>
                                                         </div>
                                                     </form>
@@ -144,8 +159,9 @@
                                         </div>
                                     {% elif pago_realizado %}
                                         <form onsubmit="return confirmarCancelacion(event)" action="{{ url_for('cancelar_pago', id_credito=credito.id_credito, fecha=fecha) }}" method="POST" class="m-0">
-                                            <button type="submit" class="btn btn-sm btn-danger">
-                                                <i class="fas fa-undo me-1"></i> Cancelar Pago
+                                            <button type="submit" class="btn btn-sm btn-danger btn-responsive">
+                                                <i class="fas fa-undo"></i>
+                                                <span class="btn-text ms-1">Cancelar Pago</span>
                                             </button>
                                         </form>
                                     {% else %}
@@ -254,6 +270,43 @@
     }
     .btn {
         border-radius: 6px;
+    }
+    /* Estilo para el botón 'Regresar' en tema oscuro */
+    .btn-outline-light {
+        color: #ffffff;
+        border-color: rgba(255,255,255,0.15);
+    }
+    .btn-outline-light:hover {
+        background-color: rgba(255,255,255,0.06);
+        color: #ffffff;
+    }
+    /* Botones responsive: icon-only en pantallas pequeñas, pero disposición horizontal */
+    .btn-responsive { min-width: 0; }
+    @media (max-width: 768px) {
+        .btn-responsive {
+            width: auto;
+            display: inline-flex;
+            justify-content: center;
+            align-items: center;
+            padding-left: 0.6rem;
+            padding-right: 0.6rem;
+        }
+        .btn-responsive + .btn-responsive {
+            margin-top: 0;
+            margin-left: 0.5rem;
+        }
+        /* Mostrar solo el icono en pantallas pequeñas */
+        .btn-responsive .btn-text {
+            display: none;
+        }
+        .btn-responsive i {
+            margin-right: 0;
+        }
+        /* Forzar acciones de cabecera en fila, anula regla global */
+        .header-actions {
+            flex-direction: row !important;
+            align-items: center !important;
+        }
     }
     .modal-content {
         border-radius: 10px;
