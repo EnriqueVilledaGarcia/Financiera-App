@@ -109,14 +109,14 @@
                                             <!-- Botón Pagar -->
                                             <form action="{{ url_for('marcar_pago', id_credito=credito.id_credito, fecha=fecha) }}" method="POST" class="m-0">
                                                 <input type="hidden" name="cantidad" value="{{ cantidad_por_pago | round(2) }}">
-                                                <button type="submit" class="btn btn-sm btn-success btn-responsive">
+                                                <button type="submit" class="btn btn-sm btn-success btn-responsive small-pay-btn">
                                                     <i class="fas fa-check"></i>
                                                     <span class="btn-text ms-1">Pagar</span>
                                                 </button>
                                             </form>
 
                                             <!-- Botón Otra Cantidad -->
-                                            <button class="btn btn-sm btn-warning btn-responsive" data-bs-toggle="modal" data-bs-target="#modalOtraCantidad{{ loop.index }}">
+                                            <button class="btn btn-sm btn-warning btn-responsive small-pay-btn" data-bs-toggle="modal" data-bs-target="#modalOtraCantidad{{ loop.index }}">
                                                 <i class="fas fa-pen-to-square"></i>
                                                 <span class="btn-text ms-1">Otra Cantidad</span>
                                             </button>
@@ -159,7 +159,7 @@
                                         </div>
                                     {% elif pago_realizado %}
                                         <form onsubmit="return confirmarCancelacion(event)" action="{{ url_for('cancelar_pago', id_credito=credito.id_credito, fecha=fecha) }}" method="POST" class="m-0">
-                                            <button type="submit" class="btn btn-sm btn-danger btn-responsive">
+                                            <button type="submit" class="btn btn-sm btn-danger btn-responsive small-pay-btn">
                                                 <i class="fas fa-undo"></i>
                                                 <span class="btn-text ms-1">Cancelar Pago</span>
                                             </button>
@@ -270,6 +270,14 @@
     }
     .btn {
         border-radius: 6px;
+    }
+    /* Botones específicos (Pagar, Otra Cantidad, Cancelar Pago) tamaño mediano */
+    .small-pay-btn {
+        padding: 0.35rem 0.7rem;
+        font-size: 0.95rem;
+        line-height: 1.25;
+        min-width: 0;
+        height: auto;
     }
     /* Estilo para el botón 'Regresar' en tema oscuro */
     .btn-outline-light {
