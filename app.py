@@ -269,6 +269,25 @@ def creditos():
             except ValueError:
                 credito.total_original = 0.0
 
+    # Reordenar créditos: primero los no pagados ordenados por fecha_fin, después los pagados
+    def _fecha_key(c):
+        # Devuelve una fecha para ordenar; los créditos sin fecha se envían al final
+        if isinstance(c.fecha_fin, date):
+            return c.fecha_fin
+        try:
+            return datetime.strptime(str(c.fecha_fin), '%Y-%m-%d').date()
+        except Exception:
+            try:
+                return datetime.strptime(str(c.fecha_fin), '%d/%m/%Y').date()
+            except Exception:
+                return date.max
+
+    creditos_no_pagados = [c for c in creditos if not (isinstance(c.total, (int, float)) and c.total == 0)]
+    creditos_pagados = [c for c in creditos if (isinstance(c.total, (int, float)) and c.total == 0)]
+    # Ordenar los no pagados por fecha_fin ascendente
+    creditos_no_pagados.sort(key=_fecha_key)
+    creditos = creditos_no_pagados + creditos_pagados
+
     # Calcular estadísticas
     total_creditos = len(creditos)
     creditos_vigentes = 0
@@ -368,12 +387,38 @@ def creditos_pdf():
         # Crear datos para la tabla
         data = [['Estatus', 'Cliente', 'F. Inicio', 'F. Fin', 'Total Original', 'Restante']]
         
-        # Ordenar créditos por estatus
-        creditos_sorted = sorted(creditos, key=lambda c: (
-            0 if (isinstance(c.fecha_fin, date) and c.fecha_fin < current_date and c.total > 0) else  # Vencidos
-            1 if (isinstance(c.fecha_fin, date) and c.total > 0 and (c.fecha_fin - current_date).days <= 20) else  # Próximos a vencer
-            2  # Otros
-        ))
+        # Ordenar créditos: primero por estatus (vencidos, próximos, otros),
+        # y siempre enviar los Pagados (total == 0) al final. Usar fecha_fin como desempate.
+        def _fecha_key_pdf(c):
+            if isinstance(c.fecha_fin, date):
+                return c.fecha_fin
+            try:
+                return datetime.strptime(str(c.fecha_fin), '%Y-%m-%d').date()
+            except Exception:
+                try:
+                    return datetime.strptime(str(c.fecha_fin), '%d/%m/%Y').date()
+                except Exception:
+                    return date.max
+
+        def _status_priority(c):
+            # Créditos pagados deben ir al final
+            try:
+                if isinstance(c.total, (int, float)) and c.total == 0:
+                    return 3
+            except Exception:
+                pass
+
+            # 0: vencido, 1: próximo a vencer (<=20 días), 2: otros
+            try:
+                if isinstance(c.fecha_fin, date) and c.fecha_fin < current_date and c.total > 0:
+                    return 0
+                if isinstance(c.fecha_fin, date) and c.total > 0 and (c.fecha_fin - current_date).days <= 20:
+                    return 1
+            except Exception:
+                pass
+            return 2
+
+        creditos_sorted = sorted(creditos, key=lambda c: (_status_priority(c), _fecha_key_pdf(c)))
         
         for credito in creditos_sorted:
             # Determinar estatus
@@ -571,6 +616,21 @@ def detalle_credito_pdf(id_cliente, id_credito):
         cliente_nombre = f"{cliente.nombre} {cliente.ap_paterno} {cliente.ap_materno}" if cliente else 'N/A'
         elements.append(Paragraph(f'Cliente: {cliente_nombre}', normal_center))
         elements.append(Paragraph(f'Fecha de generación: {datetime.now().strftime("%d/%m/%Y %H:%M")}', normal_center))
+
+        # Información de la financiera (leer desde variables de entorno si están disponibles)
+        telefono_financiera = os.getenv('FINANCIERA_TELEFONO', '')
+        email_financiera = os.getenv('FINANCIERA_EMAIL', '')
+        ubicacion_financiera = os.getenv('FINANCIERA_UBICACION', '')
+        contacto_parts = []
+        if telefono_financiera:
+            contacto_parts.append(f'Teléfono: {telefono_financiera}')
+        if email_financiera:
+            contacto_parts.append(f'Correo: {email_financiera}')
+        if ubicacion_financiera:
+            contacto_parts.append(f'Ubicación: {ubicacion_financiera}')
+        if contacto_parts:
+            elements.append(Paragraph(' — '.join(contacto_parts), normal_center))
+
         elements.append(Spacer(1, 12))
 
         # Por cada crédito crear una tabla de fechas y status
@@ -589,7 +649,38 @@ def detalle_credito_pdf(id_cliente, id_credito):
                     except Exception:
                         cantidad_por_pago = 0.0
 
-                total_restante = float(credito.total) if credito.total is not None else 0.0
+                # Calcular totales: original, restante y abonado
+                try:
+                    total_original = float(credito.total_original) if credito.total_original is not None else 0.0
+                except Exception:
+                    try:
+                        total_original = float(credito.total) if credito.total is not None else 0.0
+                    except Exception:
+                        total_original = 0.0
+
+                try:
+                    total_restante = float(credito.total) if credito.total is not None else 0.0
+                except Exception:
+                    total_restante = 0.0
+
+                abonado = max(0.0, total_original - total_restante)
+
+                # Calcular pagos realizados y restantes
+                pagos_hechos = len(credito.pagos) if credito.pagos else 0
+                try:
+                    pagos_totales = int(credito.no_pagos)
+                except Exception:
+                    pagos_totales = 0
+                pagos_restantes = max(0, pagos_totales - pagos_hechos)
+
+                # Añadir resumen del crédito antes de la tabla
+                resumen_lines = []
+                resumen_lines.append(f'Monto total de crédito: ${total_original:,.2f}')
+                resumen_lines.append(f'Restante: ${total_restante:,.2f}')
+                resumen_lines.append(f'Abonado: ${abonado:,.2f}')
+                elements.append(Paragraph(' — '.join(resumen_lines), styles['Normal']))
+                elements.append(Paragraph(f'Pagos realizados: {pagos_hechos} — Pagos restantes: {pagos_restantes}', styles['Normal']))
+                elements.append(Spacer(1, 6))
 
                 for fecha in credito.fechas_pagos:
                     pago_realizado = [p for p in credito.pagos if p.fecha == fecha]

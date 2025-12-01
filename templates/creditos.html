@@ -101,7 +101,7 @@
                         </tr>
                     </thead>
                     <tbody class="table-group-divider" id="creditosTable">
-                        {% for credito in creditos|sort(attribute='fecha_fin') %}
+                        {% for credito in creditos %}
                         <tr>
                             <td class="align-middle">
                                 {% if credito.total == 0 %}
