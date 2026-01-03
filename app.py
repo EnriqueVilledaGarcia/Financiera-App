@@ -604,7 +604,7 @@ def detalle_credito_pdf(id_cliente, id_credito):
         try:
             logo_path = os.path.join(app.static_folder, 'logotipo.png')
             if os.path.exists(logo_path):
-                logo = Image(logo_path, width=2*inch, height=1*inch)
+                logo = Image(logo_path, width=90, height=45)
                 logo.hAlign = 'CENTER'
                 elements.append(logo)
                 elements.append(Spacer(1, 12))
@@ -617,21 +617,6 @@ def detalle_credito_pdf(id_cliente, id_credito):
         elements.append(Paragraph(f'Cliente: {cliente_nombre}', normal_center))
         elements.append(Paragraph(f'Fecha de generación: {datetime.now().strftime("%d/%m/%Y %H:%M")}', normal_center))
 
-        # Información de la financiera (leer desde variables de entorno si están disponibles)
-        telefono_financiera = os.getenv('FINANCIERA_TELEFONO', '')
-        email_financiera = os.getenv('FINANCIERA_EMAIL', '')
-        ubicacion_financiera = os.getenv('FINANCIERA_UBICACION', '')
-        contacto_parts = []
-        if telefono_financiera:
-            contacto_parts.append(f'Teléfono: {telefono_financiera}')
-        if email_financiera:
-            contacto_parts.append(f'Correo: {email_financiera}')
-        if ubicacion_financiera:
-            contacto_parts.append(f'Ubicación: {ubicacion_financiera}')
-        if contacto_parts:
-            elements.append(Paragraph(' — '.join(contacto_parts), normal_center))
-
-        elements.append(Spacer(1, 12))
 
         # Por cada crédito crear una tabla de fechas y status
         for credito in creditos:
@@ -690,7 +675,7 @@ def detalle_credito_pdf(id_cliente, id_credito):
                         status = 'Pagado'
                     elif fecha < current_date.strftime('%Y-%m-%d'):
                         dias = (current_date - datetime.strptime(fecha, '%Y-%m-%d').date()).days
-                        status = f'Retrasado ({dias}d)'
+                        status = f'Atrasado ({dias}d)'
                     else:
                         status = 'Pendiente'
 
