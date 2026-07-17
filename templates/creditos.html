@@ -120,15 +120,15 @@
                             <td class="align-middle">${{ "{:,.2f}".format(credito.total_original) }}</td>   
                             <td class="align-middle">${{ "{:,.2f}".format(credito.total) }}</td>   
                             <td class="align-middle text-end">
-                                <div class="d-flex justify-content-end gap-2 flex-wrap">
+                                <div class="credit-actions d-flex justify-content-end gap-2 flex-wrap">
                                     <a href="{{ url_for('detalle_credito', id_cliente=credito.id_cliente, id_credito=credito.id_credito) }}" 
                                        class="btn btn-sm btn-outline-primary">
                                         <i class="fa-solid fa-money-bill-wave me-1"></i> Pagos
                                     </a>
-                                    {% if credito.total == 0 or credito.fecha_fin < current_date or ((credito.fecha_fin - current_date).days <= 20 and credito.total > 0) %}
-                                    <button class="btn btn-sm btn-outline-danger delete-credit-btn" 
+                                    {% if credito.total == 0 %}
+                                    <button class="btn btn-sm btn-outline-danger delete-credit-btn credit-delete-btn" 
                                             data-url="{{ url_for('delete_credito', id_credito=credito.id_credito) }}">
-                                        <i class="fa-solid fa-trash"></i>
+                                        <i class="fa-solid fa-trash me-1"></i><span class="credit-delete-text">Eliminar</span>
                                     </button>
                                     {% endif %}
                                 </div>
@@ -165,6 +165,12 @@
     }
     .btn {
         border-radius: 6px;
+    }
+    .credit-actions {
+        align-items: center;
+    }
+    .credit-delete-btn {
+        white-space: nowrap;
     }
     /* Restaurar estilo visual original de botones claros (color/borde/hover)
        pero dejar el tamaño controlado por `base.html` */
@@ -229,6 +235,21 @@
         }
         .text-end {
             text-align: start !important;
+        }
+        .credit-actions {
+            justify-content: flex-start !important;
+        }
+        .credit-actions .btn {
+            width: 100%;
+            justify-content: center;
+        }
+    }
+    @media (max-width: 576px) {
+        .credit-delete-text {
+            display: none;
+        }
+        .credit-delete-btn {
+            min-height: 38px;
         }
     }
 </style>
