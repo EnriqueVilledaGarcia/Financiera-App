@@ -64,6 +64,36 @@ def verificar_sesion():
     if ruta_actual not in rutas_sin_proteccion and 'usuario' not in session:
         return redirect(url_for('login'))  # Redirigir al login si no hay sesión activa
 
+
+def _credito_fecha_key(credito):
+    if isinstance(credito.fecha_fin, date):
+        return credito.fecha_fin
+    try:
+        return datetime.strptime(str(credito.fecha_fin), '%Y-%m-%d').date()
+    except Exception:
+        try:
+            return datetime.strptime(str(credito.fecha_fin), '%d/%m/%Y').date()
+        except Exception:
+            return date.max
+
+
+def _credito_status_priority(credito, current_date):
+    try:
+        if float(credito.total) == 0:
+            return 3
+    except Exception:
+        pass
+
+    try:
+        if isinstance(credito.fecha_fin, date) and credito.fecha_fin < current_date:
+            return 0
+        if isinstance(credito.fecha_fin, date) and (credito.fecha_fin - current_date).days <= 20:
+            return 1
+    except Exception:
+        pass
+
+    return 2
+
 #Modelo de la base de datos
 
 #clientes
@@ -273,24 +303,8 @@ def creditos():
             except ValueError:
                 credito.total_original = 0.0
 
-    # Reordenar créditos: primero los no pagados ordenados por fecha_fin, después los pagados
-    def _fecha_key(c):
-        # Devuelve una fecha para ordenar; los créditos sin fecha se envían al final
-        if isinstance(c.fecha_fin, date):
-            return c.fecha_fin
-        try:
-            return datetime.strptime(str(c.fecha_fin), '%Y-%m-%d').date()
-        except Exception:
-            try:
-                return datetime.strptime(str(c.fecha_fin), '%d/%m/%Y').date()
-            except Exception:
-                return date.max
-
-    creditos_no_pagados = [c for c in creditos if not (isinstance(c.total, (int, float)) and c.total == 0)]
-    creditos_pagados = [c for c in creditos if (isinstance(c.total, (int, float)) and c.total == 0)]
-    # Ordenar los no pagados por fecha_fin ascendente
-    creditos_no_pagados.sort(key=_fecha_key)
-    creditos = creditos_no_pagados + creditos_pagados
+    # Ordenar por estado: vencidos, próximos, vigentes y finalmente los pagados.
+    creditos.sort(key=lambda c: (_credito_status_priority(c, current_date), _credito_fecha_key(c)))
 
     # Calcular estadísticas
     total_creditos = len(creditos)
@@ -391,38 +405,8 @@ def creditos_pdf():
         # Crear datos para la tabla
         data = [['Estatus', 'Cliente', 'F. Inicio', 'F. Fin', 'Total Original', 'Restante']]
         
-        # Ordenar créditos: primero por estatus (vencidos, próximos, otros),
-        # y siempre enviar los Pagados (total == 0) al final. Usar fecha_fin como desempate.
-        def _fecha_key_pdf(c):
-            if isinstance(c.fecha_fin, date):
-                return c.fecha_fin
-            try:
-                return datetime.strptime(str(c.fecha_fin), '%Y-%m-%d').date()
-            except Exception:
-                try:
-                    return datetime.strptime(str(c.fecha_fin), '%d/%m/%Y').date()
-                except Exception:
-                    return date.max
-
-        def _status_priority(c):
-            # Créditos pagados deben ir al final
-            try:
-                if isinstance(c.total, (int, float)) and c.total == 0:
-                    return 3
-            except Exception:
-                pass
-
-            # 0: vencido, 1: próximo a vencer (<=20 días), 2: otros
-            try:
-                if isinstance(c.fecha_fin, date) and c.fecha_fin < current_date and c.total > 0:
-                    return 0
-                if isinstance(c.fecha_fin, date) and c.total > 0 and (c.fecha_fin - current_date).days <= 20:
-                    return 1
-            except Exception:
-                pass
-            return 2
-
-        creditos_sorted = sorted(creditos, key=lambda c: (_status_priority(c), _fecha_key_pdf(c)))
+        # Ordenar créditos: vencidos, próximos, vigentes y al final los pagados.
+        creditos_sorted = sorted(creditos, key=lambda c: (_credito_status_priority(c, current_date), _credito_fecha_key(c)))
         
         for credito in creditos_sorted:
             # Determinar estatus

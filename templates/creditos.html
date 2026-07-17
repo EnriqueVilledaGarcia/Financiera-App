@@ -121,13 +121,11 @@
                             <td class="align-middle">${{ "{:,.2f}".format(credito.total) }}</td>   
                             <td class="align-middle text-end">
                                 <div class="d-flex justify-content-end gap-2 flex-wrap">
-                                    {% if credito.total > 0 %}
                                     <a href="{{ url_for('detalle_credito', id_cliente=credito.id_cliente, id_credito=credito.id_credito) }}" 
                                        class="btn btn-sm btn-outline-primary">
                                         <i class="fa-solid fa-money-bill-wave me-1"></i> Pagos
                                     </a>
-                                    {% endif %}
-                                    {% if credito.total == 0 %}
+                                    {% if credito.total == 0 or credito.fecha_fin < current_date or ((credito.fecha_fin - current_date).days <= 20 and credito.total > 0) %}
                                     <button class="btn btn-sm btn-outline-danger delete-credit-btn" 
                                             data-url="{{ url_for('delete_credito', id_credito=credito.id_credito) }}">
                                         <i class="fa-solid fa-trash"></i>
@@ -266,19 +264,29 @@
         });
     });
 
-    // Ordenar la tabla colocando los créditos vencidos primero, luego los próximos a vencer
+    // Ordenar la tabla colocando vencidos primero, luego próximos, vigentes y al final los pagados
     document.addEventListener('DOMContentLoaded', function () {
         const tableBody = document.getElementById('creditosTable');
         const rows = Array.from(tableBody.querySelectorAll('tr'));
+
+        const getPriority = (statusText) => {
+            if (statusText.includes('Vencido')) return 0;
+            if (statusText.includes('Próximo a vencer')) return 1;
+            if (statusText.includes('Pagado')) return 3;
+            return 2;
+        };
 
         rows.sort((a, b) => {
             const statusA = a.querySelector('td:first-child .badge').textContent.trim();
             const statusB = b.querySelector('td:first-child .badge').textContent.trim();
 
-            if (statusA.includes('Vencido')) return -1;
-            if (statusB.includes('Vencido')) return 1;
-            if (statusA.includes('Próximo a vencer')) return -1;
-            if (statusB.includes('Próximo a vencer')) return 1;
+            const priorityA = getPriority(statusA);
+            const priorityB = getPriority(statusB);
+
+            if (priorityA !== priorityB) {
+                return priorityA - priorityB;
+            }
+
             return 0;
         });
 
